@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -28,18 +29,19 @@ import org.junit.runner.manipulation.Sortable;
 
 public class ToDoWindow implements ActionListener {
     private JFrame frame;
-    private JButton button, submit, update;
+    private JButton button, submit, clearSelected;
     private JLabel label;
     private JTextField text;
     private JPanel topPanel, bottomPanel, centerPanel, topRightPanel,
         topLeftPanel;
     private DoublyLinkedList<JCheckBox> jList;
     private ArrayList<Message> list;
-    private boolean darkMode = true;
+    private boolean darkMode = false;
     private JButton clear;
     private Color dark, light;
     private Font newFont, defaultFont, checkBoxFont;
 
+    private ActionListener actionListener;
     public ToDoWindow() {
         frame = new JFrame("To-Do App");
         frame.setLayout(new BorderLayout());
@@ -53,6 +55,7 @@ public class ToDoWindow implements ActionListener {
         defaultFont = new Font("Times New Roman", Font.PLAIN, 13);
         checkBoxFont = new Font("Times New Roman", Font.PLAIN, 16);
         
+       
 
         dark = new Color(20, 4, 0);
         light = new Color(240, 230, 225);
@@ -98,15 +101,15 @@ public class ToDoWindow implements ActionListener {
         button.addActionListener(this);
         button.setFont(defaultFont);
 
-        update = new JButton("Update");
-        update.setFocusable(false);
-        update.addActionListener(this);
-        update.setBackground(light);
-        update.setFont(defaultFont);
+        clearSelected = new JButton("Clear Selected");
+        clearSelected.setFocusable(false);
+        clearSelected.addActionListener(this);
+        clearSelected.setBackground(light);
+        clearSelected.setFont(defaultFont);
 
-        clear = new JButton("Clear");
+        clear = new JButton("Clear All");
         clear.addActionListener(this);
-        clear.setBounds(new Rectangle(72, 30));
+        clear.setBounds(new Rectangle(90, 30));
         clear.setBackground(light);
         clear.setFont(defaultFont);
         clear.setFocusable(false);
@@ -137,10 +140,11 @@ public class ToDoWindow implements ActionListener {
         frame.add(centerPanel, BorderLayout.CENTER);
         topPanel.add(label);
 
+        bottomPanel.add(clearSelected);
         bottomPanel.add(text);
         bottomPanel.add(submit);
         topRightPanel.add(clear);
-        bottomPanel.add(update);
+      
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         ImageIcon image = new ImageIcon("dd0.jpg");
@@ -150,8 +154,23 @@ public class ToDoWindow implements ActionListener {
         // label.setForeground(dark);
         jList = new DoublyLinkedList<JCheckBox>();
         list = new ArrayList<Message>();
+        
+        
 
         frame.setVisible(true);
+        
+         actionListener = new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+              AbstractButton abstractButton = (AbstractButton) actionEvent.getSource();
+              boolean selected = abstractButton.getModel().isSelected();
+              if(selected) {
+                  abstractButton.setFont(newFont);
+              }else {
+                  abstractButton.setFont(checkBoxFont);
+              }
+              // abstractButton.setText(newLabel);
+            }
+          };
 
     }
 
@@ -166,34 +185,44 @@ public class ToDoWindow implements ActionListener {
             "Dark-Mode")) {
             lightMode();
 
-        }
-
-        if (e.getSource() == submit) {
+        }else if (e.getSource() == submit) {
             submit();
 
-        }
-
-        if (e.getSource() == clear) {
+        }else if (e.getSource() == clear) {
             clear();
+        }else if(e.getSource() == clearSelected) {
+            clearSelected();
+            
         }
+        
+        
 
-        if (e.getSource() == update) {
-            update();
-        }
+//        if (e.getSource() == update) {
+//            update();
+//        }
 
     }
 
 
-    private void update() {
+    private void clearSelected() {
         for (int i = 0; i < jList.size(); i++) {
             JCheckBox box = jList.get(i);
-            if (box.isSelected()) {
-                box.setFont(newFont);
+            if(box.isSelected()) {
+                centerPanel.remove(box);
+                jList.remove(i);
+                list.remove(i);
+                i--;
             }
-            else {
-                box.setFont(checkBoxFont);
+            
+            if(jList.size() <= i) {
+                break;
             }
+
         }
+        centerPanel.revalidate();
+        centerPanel.repaint();
+        
+        
     }
 
 
@@ -271,6 +300,7 @@ public class ToDoWindow implements ActionListener {
             }
             newLabel.setFocusable(false);
             newLabel.setFont(checkBoxFont);
+            newLabel.addActionListener(actionListener);
             centerPanel.add(newLabel);
             jList.add(newLabel);
             frame.setVisible(true);
